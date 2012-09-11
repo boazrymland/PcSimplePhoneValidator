@@ -21,11 +21,15 @@ class PcSimplePhoneValidator extends CValidator {
 	/* @var int $minNumDigits maximum allowed number of digits in the phone number */
 	public $maxNumDigits = 18;
 
+	/* @var bool $allowEmpty Whether the attribute is allowed to be empty. */
+	public $allowEmpty = false;
 	/* @var string $message default error message.
 	 * Note that if you wish it to be translated please pass translated value to this validator class in rules() method
 	 * for the relevant AR class. */
 	public $message = "Invalid phone number";
 
+	/* @var string $emptyMessage the message to be displayed if an empty value is validated while 'allowEmpty' is false */
+	public $emptyMessage = "{attribute} cannot be blank";
 	/* @var bool $logValidationErrors whether to log validation errors or not. When logging is enabled, the log message
 	 *     includes the invalid value. I wasn't sure about possible security implications of this so this is by default false. */
 	public $logValidationErrors = false;
@@ -39,6 +43,15 @@ class PcSimplePhoneValidator extends CValidator {
 	 * @throws CException
 	 */
 	protected function validateAttribute($object, $attribute) {
+		// first, if 'allowEmpty' is true and the attribute is indeed empty - finish execution - all good!
+		if (empty($object->$attribute)) {
+			if ($this->allowEmpty) {
+				return;
+			}
+			$translated_msg = Yii::t("PcSimplePhoneValidator.general", $this->emptyMessage, array('{attribute}' => $attribute));
+			$this->addError($object, $attribute, $translated_msg);
+			return;
+		}
 		/*
 		 * strip down anything that is not a digit.
 		 * at the end, we should be left with number of digits that is no less than minNumDigits and no
@@ -56,6 +69,7 @@ class PcSimplePhoneValidator extends CValidator {
 			Yii::log("phone number in object of type " . get_class($object) . ", as checked in attribute named $attribute, was found to be invalid." .
 					" Value supplied = " . $object->$attribute, CLogger::LEVEL_INFO, __METHOD__);
 		}
-		$this->addError($object, $attribute, $this->message);
+		$translated_msg = Yii::t("PcSimplePhoneValidator.general", $this->message);
+		$this->addError($object, $attribute, $translated_msg);
 	}
 }
